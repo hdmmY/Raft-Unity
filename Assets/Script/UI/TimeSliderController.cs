@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class TimeSliderController : MonoBehaviour
 {
     public Slider m_timeSlider;
-    public Text m_timeText;
+    public TMPro.TextMeshProUGUI m_timeText;
 
     private void Update()
     {

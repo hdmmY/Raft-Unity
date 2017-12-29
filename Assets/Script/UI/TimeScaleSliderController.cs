@@ -8,11 +8,13 @@ public class TimeScaleSliderController : MonoBehaviour
 {
     public Slider m_timeScaleSlider;
 
-    public Text m_timeScaleText;
+    public TMPro.TextMeshProUGUI m_timeScaleText;
 
-    public void Update()
+    private void Update()
     {
         int scale = (int)(m_timeScaleSlider.maxValue + m_timeScaleSlider.minValue - m_timeScaleSlider.value);
+        scale = (int)(Mathf.Pow(scale / 1000f, 4) * 1000);
+
         RaftTime.Instance.TimeScale = 1f / scale;
         m_timeScaleText.text = scale.ToString();
     }                                                      

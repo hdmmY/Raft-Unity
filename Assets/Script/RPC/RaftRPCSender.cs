@@ -60,12 +60,33 @@ public class RaftRPCSender : MonoBehaviour
                 requestVoteGo.GetComponent<SpriteRenderer>().sprite = m_normalSendIcon;
             }
         }
-
     }
 
-    public bool SendRequestVoteRPCReturn(RaftServerProperty serverProperty, Transform target)
+
+    /// <summary>
+    /// Inoved by receiver to return vote RPC
+    /// </summary>
+    /// <param name="term">Current term, for candidate to update itself</param>
+    /// <param name="voteGranted">True means candidate received vote</param>
+    /// <param name="target">Candidate</param>
+    public void SendRequestVoteRPCReturn(int term, bool voteGranted, Transform candidate)
     {
-        return false;
+        var requestReturnGo = Instantiate(m_requestVoteRetuPrefab, transform.position, Quaternion.identity);
+
+        // Set returns
+        var requestReturn = requestReturnGo.GetComponent<RaftRequestVoteReturns>();
+        requestReturn.m_target = candidate;
+        requestReturn.m_rpcType = RaftRPCType.RequestVoteReturn;
+        requestReturn.m_term = term;
+        requestReturn.m_voteGranted = voteGranted;
+
+        // Set move script
+        var moveToward = requestReturnGo.GetComponent<MoveToward>();
+        moveToward.m_target = candidate;
+        moveToward.enabled = true;
+
+        // Set sprite
+        requestReturnGo.GetComponent<SpriteRenderer>().sprite = voteGranted ? m_voteTrueSendIcon : m_voteFalseSendIcon;
     }
 
 }
