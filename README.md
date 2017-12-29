@@ -1,2 +1,2 @@
 # Raft-Unity
-The raft concensus algorithm implement using Unity
+The raft concensus algorithm implemented with Unity.
