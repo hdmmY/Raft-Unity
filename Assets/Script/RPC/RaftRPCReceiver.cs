@@ -96,6 +96,12 @@ public class RaftRPCReceiver : MonoBehaviour
             _serverStateController.m_currentState.InitializeState(_serverProperty);
         }
 
+        // If a follower receive RPC from other, it will reset the time
+        if(_serverStateController.m_stateType == RaftStateType.Follower)
+        {
+            _serverStateController.m_currentState.InitializeState(_serverProperty);
+        }
+
         // Send the returns
         var candidate = RaftServerManager.Instance.GetServer(rpcModel.m_candidateId).transform;
         _rpcSender.SendRequestVoteRPCReturn(_serverProperty.m_currentTerm, voteGranted, candidate);

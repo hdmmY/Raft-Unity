@@ -16,9 +16,43 @@ public class RaftRPCSender : MonoBehaviour
     public Sprite m_voteFalseSendIcon;
 
 
-    public bool SendAppendEntriesRPCArgu(RaftServerProperty serverProperty, Transform target)
+    /// <summary>
+    /// Invoked by leader to append entries to follower
+    /// </summary>
+    /// <param name="term">Leader's term</param>
+    /// <param name="leaderId">Leader's id. So follower can redirect clients</param>
+    /// <param name="prevLogIndex">Index of log entry immediately preceding new ones</param>
+    /// <param name="prevLogTerm">Term of prevLogIndex</param>
+    /// <param name="entries">Log entries to store (empty for heartbeat; may send more than one entry for efficiency)</param>
+    /// <param name="leaderCommit">Leader's committed index</param>
+    public void SendAppendEntriesRPCArgu(int term, int leaderId, int prevLogIndex, int prevLogTerm, List<char?> entries, int leaderCommit)
     {
-        return false;
+        foreach(var server in RaftServerManager.Instance.m_servers)
+        {
+            if(server.m_serverId != leaderId)
+            {
+                GameObject appendEntriesGo = Instantiate(m_appendEntriesArguPrefab, transform.position, Quaternion.identity);
+
+                // Set append entries arguments
+                var argus = appendEntriesGo.GetComponent<RaftAppendEntriesArgus>();
+                argus.m_rpcType = RaftRPCType.AppendEntriesArgu;
+                argus.m_target = server.transform;
+                argus.m_term = term;
+                argus.m_leaderId = leaderId;
+                argus.m_prevLogIndex = prevLogIndex;
+                argus.m_prevLogTerm = prevLogTerm;
+                argus.m_entries = new List<char?>(entries);
+                argus.m_leaderCommit = leaderCommit;
+
+                // Init move script
+                var moveToward = appendEntriesGo.GetComponent<MoveToward>();
+                moveToward.m_target = server.transform;
+                moveToward.enabled = true;
+
+                // Set sprite
+                appendEntriesGo.GetComponent<SpriteRenderer>().sprite = m_normalSendIcon;
+            }
+        }
     }
 
     public bool SendAppendEntriesRPCReturn(RaftServerProperty serverProperty, Transform target)

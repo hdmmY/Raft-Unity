@@ -24,13 +24,13 @@ public class TimerImageController : MonoBehaviour
         {
             m_timerImage.color = m_timerColor;
             var follower = (RaftFollowerState)m_stateController.m_currentState;
-            m_timerImage.fillAmount = follower.m_electionTimer / follower.m_electionTimeout;
+            m_timerImage.fillAmount = 1 - follower.m_electionTimer / follower.m_electionTimeout;
         }
         else if(m_stateController.m_stateType == RaftStateType.Candidate)
         {
             m_timerImage.color = m_timerColor;
             var candidate = (RaftCandidateState)m_stateController.m_currentState;
-            m_timerImage.fillAmount = candidate.m_electionTimer / candidate.m_electionTimeout;
+            m_timerImage.fillAmount = 1 - candidate.m_electionTimer / candidate.m_electionTimeout;
         } 
     }
 }

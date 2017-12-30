@@ -27,7 +27,7 @@ public class RaftAppendEntriesArgus : RaftBaseRPCModel
     /// <summary>
     /// Log entries to store (empty for heartbeat; may send more than one entry for efficiency)
     /// </summary>
-    public List<string> m_entries;
+    public List<char?> m_entries;
 
     /// <summary>
     /// Leader's committed index
