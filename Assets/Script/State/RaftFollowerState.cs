@@ -29,6 +29,8 @@ public class RaftFollowerState : RaftBaseState
         base.InitializeState(serverProperty);
 
         m_stateController.m_stateType = RaftStateType.Follower;
+
+        // Set timeout
         m_electionTimeout = Random.Range(m_minElectionTimeout, m_maxElectionTimeout);
         m_electionTimer = 0;
     }
@@ -43,14 +45,10 @@ public class RaftFollowerState : RaftBaseState
         // it will assumes there is no viable leader and begins an election to chooses a leader.
         if (m_electionTimer >= m_electionTimeout)
         {
-            // To begin an election, the follower increments its current term and transition to candidate state
-            serverProperty.m_currentTerm++;
+            // Transition to candidate state
             m_stateController.m_currentState = m_stateController.GetState("Candidate State");
             m_stateController.m_currentState.InitializeState(serverProperty);
-        }
-
-
-
+        }    
     }
 
 

@@ -27,21 +27,14 @@ public class RaftCandidateState : RaftBaseState
     /// All servers in the cluster vote result for candidata
     /// Key : server id. Value : vote result
     /// </summary>
-    public Dictionary<int, bool> m_voteResult;
+    public bool[] m_voteResult;
 
     public override void InitializeState(RaftServerProperty serverProperty)
     {
         base.InitializeState(serverProperty);
 
         m_stateController.m_stateType = RaftStateType.Candidate;
-
-        m_electionTimeout = Random.Range(m_minElectionTimeout, m_maxElectionTimeout);
-        m_electionTimer = 0;
-
-        // Vote for itself and issues RequestVote RPC to other server
-        serverProperty.m_votedFor = serverProperty.m_serverId;
-        IssueRquestVotes(serverProperty);
-        InitiVoteGranded(serverProperty);
+        StartElection(serverProperty);
     }
 
     public override void UpdateState(RaftServerProperty serverProperty)
@@ -50,20 +43,34 @@ public class RaftCandidateState : RaftBaseState
 
         m_electionTimer += RaftTime.Instance.DeltTime;
 
-        // If a candidate timeout, it will start a new election by
-        // increamenting its term and initiating another round of RequestVote RPCs 
+        // If a candidate timeout, it will start a new election
         if (m_electionTimer >= m_electionTimeout)
         {
-            serverProperty.m_currentTerm++;
-
-            m_electionTimeout = Random.Range(m_minElectionTimeout, m_maxElectionTimeout);
-            m_electionTimer = 0;
-
-            IssueRquestVotes(serverProperty);
-            InitiVoteGranded(serverProperty);
+            StartElection(serverProperty);
         }
     }
 
+    /// <summary>
+    /// Start an election
+    /// </summary>
+    private void StartElection(RaftServerProperty serverProperty)
+    {
+        // Reset timeout
+        m_electionTimeout = Random.Range(m_minElectionTimeout, m_maxElectionTimeout);
+        m_electionTimer = 0;
+
+        // Increment currentTerm
+        serverProperty.m_currentTerm++;
+
+        // Vote for self
+        serverProperty.m_votedFor = serverProperty.m_serverId;
+
+        // Send RequestVote RPC to all other servers
+        IssueRquestVotes(serverProperty);
+
+        // Init vote granded dictionary
+        InitiVoteGranded(serverProperty);
+    }
 
     private void IssueRquestVotes(RaftServerProperty serverProperty)
     {
@@ -76,14 +83,10 @@ public class RaftCandidateState : RaftBaseState
 
     private void InitiVoteGranded(RaftServerProperty serverProperty)
     {
-        m_voteResult = new Dictionary<int, bool>();
+        m_voteResult = new bool[RaftServerManager.Instance.m_servers.Count];
 
-        foreach(var server in RaftServerManager.Instance.m_servers)
-        {
-            m_voteResult.Add(server.m_serverId, false);
-        }
-
-        m_voteResult[serverProperty.m_serverId] = true;
+        for (int i = 0; i < m_voteResult.Length; i++) m_voteResult[i] = false;
+        m_voteResult[0] = true;  // Vote for itself
     }
 
 }

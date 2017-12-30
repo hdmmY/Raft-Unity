@@ -10,13 +10,13 @@ public class RaftStateController : MonoBehaviour
 
     public List<RaftBaseState> m_totalState;
 
-    private RaftServerProperty _property;
+    private RaftServerProperty _serverProperty;
 
     private void Awake()
     {
-        _property = GetComponent<RaftServerProperty>();
+        _serverProperty = GetComponent<RaftServerProperty>();
 
-        foreach(var state in m_totalState)
+        foreach (var state in m_totalState)
         {
             state.m_stateController = this;
         }
@@ -27,12 +27,15 @@ public class RaftStateController : MonoBehaviour
         // When the server start up, it begin as follower
         m_stateType = RaftStateType.Follower;
         m_currentState = GetState("Follower State");
-        m_currentState.InitializeState(_property);
+        m_currentState.InitializeState(_serverProperty);
     }
 
     private void Update()
     {
-        m_currentState.UpdateState(_property);
+        if (_serverProperty.m_working)
+        {
+            m_currentState.UpdateState(_serverProperty);
+        }
     }
 
     /// <summary>
@@ -40,14 +43,14 @@ public class RaftStateController : MonoBehaviour
     /// </summary>
     public RaftBaseState GetState(string stateName)
     {
-        foreach(var state in m_totalState)
+        foreach (var state in m_totalState)
         {
-            if(state.gameObject.name == stateName)
+            if (state.gameObject.name == stateName)
             {
                 return state;
             }
         }
 
         return null;
-    }            
+    }
 }

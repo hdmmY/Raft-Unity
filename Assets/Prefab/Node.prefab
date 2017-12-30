@@ -248,7 +248,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1718126980521492}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.16, y: 2.93, z: 0}
+  m_LocalPosition: {x: -4.62, y: -1.39, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 224373858634350662}
@@ -654,7 +654,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75584c0aea304c04197810cf4a4d7b94, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_serverId: 1
+  m_serverId: 4
   m_working: 1
   m_currentTerm: 0
   m_votedFor: 0
@@ -719,7 +719,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_timerImage: {fileID: 114140143589603442}
   m_timerColor: {r: 0.5661765, g: 0.5661765, b: 0.5661765, a: 1}
-  m_leaderColor: {r: 0, g: 0, b: 0, a: 0}
+  m_leaderColor: {r: 0, g: 0, b: 0, a: 1}
   m_stateController: {fileID: 114909100620538172}
 --- !u!114 &114938488410940216
 MonoBehaviour:
@@ -860,6 +860,7 @@ MonoBehaviour:
   m_maxElectionTimeout: 0.15
   m_minElectionTimeout: 0.3
   m_electionTimer: 0
+  m_voteResult: 
 --- !u!212 &212095513089139858
 SpriteRenderer:
   m_ObjectHideFlags: 1

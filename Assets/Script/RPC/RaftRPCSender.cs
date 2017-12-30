@@ -73,7 +73,7 @@ public class RaftRPCSender : MonoBehaviour
     {
         var requestReturnGo = Instantiate(m_requestVoteRetuPrefab, transform.position, Quaternion.identity);
 
-        // Set returns
+        // Set return properties
         var requestReturn = requestReturnGo.GetComponent<RaftRequestVoteReturns>();
         requestReturn.m_target = candidate;
         requestReturn.m_rpcType = RaftRPCType.RequestVoteReturn;

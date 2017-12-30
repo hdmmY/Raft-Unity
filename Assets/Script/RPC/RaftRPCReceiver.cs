@@ -7,11 +7,13 @@ public class RaftRPCReceiver : MonoBehaviour
 {
     private RaftServerProperty _serverProperty;
     private RaftStateController _serverStateController;
+    private RaftRPCSender _rpcSender;
 
     private void Awake()
     {
         _serverProperty = GetComponent<RaftServerProperty>();
         _serverStateController = GetComponent<RaftStateController>();
+        _rpcSender = GetComponent<RaftRPCSender>();
     }
 
     private void OnTriggerStay2D(Collider2D collision)
@@ -26,7 +28,7 @@ public class RaftRPCReceiver : MonoBehaviour
 
     private void Receive(RaftBaseRPCModel rpcModel)
     {
-        if (rpcModel == null || rpcModel.m_target != transform)
+        if (!_serverProperty.m_working || rpcModel == null || rpcModel.m_target != transform)
         {
             return;
         }
@@ -43,7 +45,7 @@ public class RaftRPCReceiver : MonoBehaviour
                 ProcessRequestVote((RaftRequestVoteArgus)rpcModel);
                 break;
             case RaftRPCType.RequestVoteReturn:
-                ProcessRequestVoteReturn(rpcModel);
+                ProcessRequestVoteReturn((RaftRequestVoteReturns)rpcModel);
                 break;
         }
 
@@ -65,44 +67,70 @@ public class RaftRPCReceiver : MonoBehaviour
     {
         bool voteGranted;
 
-        // Reply false if term < currentTerm
-        if (rpcModel.m_term < _serverProperty.m_currentTerm)
-        {
-            voteGranted = false;
-        }
-        //  If votedFor is null or candidateId, and candidate’s log is at least as up - to - date as receiver’s log, grant vote
-        if (_serverProperty.m_votedFor <= 0)
+        // 1. Reply false if term < currentTerm
+        // 2. If votedFor is null or candidateId, and candidate’s log is at least as up - to - date as receiver’s log, grant vote
+        if ((rpcModel.m_term >= _serverProperty.m_currentTerm) &&
+            ((_serverProperty.m_votedFor <= 0) || (_serverProperty.m_votedFor == rpcModel.m_candidateId)))
         {
             int lastIndex = _serverProperty.m_logs.Count - 1;
+            int lastTerm = lastIndex < 0 ? -1 : _serverProperty.m_logs[lastIndex].m_term;
 
-            if (lastIndex < 0)
-            {
-                voteGranted = true;
-            }
-            else
-            {
-                int lastTerm = _serverProperty.m_logs[lastIndex].m_term;
-                voteGranted = CompareLogPriority(rpcModel.m_lastLogIndex, rpcModel.m_lastLogTerm, lastIndex, lastTerm) >= 0;
-            }
+            voteGranted = CompareLogPriority(rpcModel.m_lastLogIndex, rpcModel.m_lastLogTerm, lastIndex, lastTerm) >= 0;
         }
         else
         {
             voteGranted = false;
         }
 
-        // Chage server property if vote granted
-        if(voteGranted)
+        // Chage server voteFor property if vote granted
+        if (voteGranted)
         {
             _serverProperty.m_votedFor = rpcModel.m_candidateId;
         }
 
+        // If candidate's term > currentTerm, set currentTerm = candidata's term, convert to follower
+        if (rpcModel.m_term > _serverProperty.m_currentTerm)
+        {
+            _serverProperty.m_currentTerm = rpcModel.m_term;
+            _serverStateController.m_currentState = _serverStateController.GetState("Follower State");
+            _serverStateController.m_currentState.InitializeState(_serverProperty);
+        }
+
         // Send the returns
         var candidate = RaftServerManager.Instance.GetServer(rpcModel.m_candidateId).transform;
-        GetComponent<RaftRPCSender>().SendRequestVoteRPCReturn(_serverProperty.m_currentTerm, voteGranted, candidate);
+        _rpcSender.SendRequestVoteRPCReturn(_serverProperty.m_currentTerm, voteGranted, candidate);
     }
 
-    private void ProcessRequestVoteReturn(RaftBaseRPCModel rpcModel)
+
+    private void ProcessRequestVoteReturn(RaftRequestVoteReturns rpcModel)
     {
+        // If response's term > currentTerm, set currentTerm = response'term, convert to follower
+        if (rpcModel.m_term > _serverProperty.m_currentTerm)
+        {
+            _serverProperty.m_currentTerm = rpcModel.m_term;
+            _serverStateController.m_currentState = _serverStateController.GetState("Follower State");
+            _serverStateController.m_currentState.InitializeState(_serverProperty);
+            return;
+        }
+
+        if (_serverStateController.m_stateType == RaftStateType.Candidate)
+        {
+            var candidate = (RaftCandidateState)_serverStateController.m_currentState;
+
+            if (rpcModel.m_voteGranted)
+            {
+                int voteNumber = 0;
+                while (candidate.m_voteResult[voteNumber]) voteNumber++;
+                candidate.m_voteResult[voteNumber] = true;
+
+                // If vote from majority of servers, become leader
+                if (2 * (voteNumber + 1) > candidate.m_voteResult.Length)
+                {
+                    _serverStateController.m_currentState = _serverStateController.GetState("Leader State");
+                    _serverStateController.m_currentState.InitializeState(_serverProperty);
+                }
+            }
+        }
 
     }
 
