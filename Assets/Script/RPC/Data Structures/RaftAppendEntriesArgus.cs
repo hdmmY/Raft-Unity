@@ -3,12 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class RaftAppendEntriesArgus : RaftBaseRPCModel
-{
-    /// <summary>
-    /// Leader's term
-    /// </summary>
-    public int m_term;
-
+{                                  
     /// <summary>
     /// Leader's id. So follower can redirect clients
     /// </summary>
@@ -27,7 +22,8 @@ public class RaftAppendEntriesArgus : RaftBaseRPCModel
     /// <summary>
     /// Log entries to store (empty for heartbeat; may send more than one entry for efficiency)
     /// </summary>
-    public List<char?> m_entries;
+    public List<RaftEntry> m_entries;
+    public List<int> m_indexes;
 
     /// <summary>
     /// Leader's committed index

@@ -10,4 +10,6 @@ public class RaftBaseRPCModel : MonoBehaviour
     /// This RPC node will move to target
     /// </summary>
     public Transform m_target;
+
+    public int m_term;
 }

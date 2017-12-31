@@ -8,7 +8,7 @@ public class ServerIdTextController : MonoBehaviour
 
     public TMPro.TextMeshProUGUI m_serverIdText;
 
-    private void Update()
+    private void Start()
     {
         m_serverIdText.text = string.Format("S{0}", m_serverProperty.m_serverId);
     }

@@ -19,6 +19,7 @@ public class RaftStateController : MonoBehaviour
         foreach (var state in m_totalState)
         {
             state.m_stateController = this;
+            state.m_eventMaster = GetComponent<RaftServerEventMaster>();
         }
     }
 

@@ -14,8 +14,9 @@ public class TimeScaleSliderController : MonoBehaviour
     {
         int scale = (int)(m_timeScaleSlider.maxValue + m_timeScaleSlider.minValue - m_timeScaleSlider.value);
         scale = (int)(Mathf.Pow(scale / 1000f, 4) * 1000);
+        scale = scale < 1 ? 1 : scale;
 
         RaftTime.Instance.TimeScale = 1f / scale;
-        m_timeScaleText.text = scale.ToString();
+        m_timeScaleText.text = "1 / " + scale.ToString();
     }                                                      
 }

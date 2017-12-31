@@ -6,10 +6,10 @@ public class RaftServerProperty : MonoBehaviour
 {
     // ***************  Persistent *********************
     // Update on stable storage before responding to RPCs
-    [Header("Persistant Properties")]
     /// <summary>
     /// Id that can identify a server
     /// </summary>
+    [Header("Persistant Properties")]
     public int m_serverId;
 
     /// <summary>
@@ -29,18 +29,17 @@ public class RaftServerProperty : MonoBehaviour
     public int m_votedFor;
 
     /// <summary>
-    /// Log entries. 
+    /// Log entries. Each entry contains command for state machine, and term when entry was received by leader. (first index is one)
     /// </summary>
     public List<RaftEntry> m_logs;
 
 
     // ***************** Volatile On All Servers ********************************
-    [Space]
-    [Header("Volatile Property")]
     /// <summary>
     /// Index of highest log entry known to be committed.
     /// Initialize to zero, increase monotonically
     /// </summary>
+    [Header("Volatile Property")]
     public int m_commitIndex;
 
     /// <summary>
@@ -52,12 +51,11 @@ public class RaftServerProperty : MonoBehaviour
 
     // ****************** Volatile On Leaders ***********************************
     // Reinitialized after election
-    [Space]
-    [Header("Volatile Property for Leader")]
     /// <summary>
     /// For each server, index of next log entry send to that server
     /// Initialized to leader last log index + 1
     /// </summary>
+    [Header("Volatile Property for Leader")]
     public List<int> m_nextIndex;
 
     /// <summary>
@@ -65,6 +63,23 @@ public class RaftServerProperty : MonoBehaviour
     /// Initialize to 0, increase monotonically
     /// </summary>
     public List<int> m_matchIndex;
-                    
+
+
+
+    private void OnEnable()
+    {
+        GetComponent<RaftServerEventMaster>().OnChangeTerm += UpdateProperties;
+    }
+
+    private void OnDisable()
+    {
+        GetComponent<RaftServerEventMaster>().OnChangeTerm -= UpdateProperties;
+    }
+
+    private void UpdateProperties(int currentTerm)
+    {
+        m_votedFor = 0;
+    }
+
 
 }

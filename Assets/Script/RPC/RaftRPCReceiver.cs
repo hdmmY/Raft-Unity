@@ -7,12 +7,14 @@ public class RaftRPCReceiver : MonoBehaviour
 {
     private RaftServerProperty _serverProperty;
     private RaftStateController _serverStateController;
+    private RaftServerEventMaster _serverEventMaster;
     private RaftRPCSender _rpcSender;
 
     private void Awake()
     {
         _serverProperty = GetComponent<RaftServerProperty>();
         _serverStateController = GetComponent<RaftStateController>();
+        _serverEventMaster = GetComponent<RaftServerEventMaster>();
         _rpcSender = GetComponent<RaftRPCSender>();
     }
 
@@ -33,13 +35,22 @@ public class RaftRPCReceiver : MonoBehaviour
             return;
         }
 
+        // If leader's term > currentTerm, set currentTerm = leader's term, convert to follower
+        if (rpcModel.m_term > _serverProperty.m_currentTerm)
+        {
+            _serverProperty.m_currentTerm = rpcModel.m_term;
+            _serverStateController.m_currentState = _serverStateController.GetState("Follower State");
+            _serverStateController.m_currentState.InitializeState(_serverProperty);
+            _serverProperty.GetComponent<RaftServerEventMaster>().CallOnChangeTerm(_serverProperty.m_currentTerm);
+        }
+
         switch (rpcModel.m_rpcType)
         {
             case RaftRPCType.AppendEntriesArgu:
-                ProcessAppendEntries(rpcModel);
+                ProcessAppendEntries((RaftAppendEntriesArgus)rpcModel);
                 break;
             case RaftRPCType.AppendEntriesReturn:
-                ProcessAppendEntriesReturn(rpcModel);
+                ProcessAppendEntriesReturn((RaftAppendEntriesReturns)rpcModel);
                 break;
             case RaftRPCType.RequestVoteArgu:
                 ProcessRequestVote((RaftRequestVoteArgus)rpcModel);
@@ -53,33 +64,89 @@ public class RaftRPCReceiver : MonoBehaviour
     }
 
 
-    private void ProcessAppendEntries(RaftBaseRPCModel rpcModel)
+    private void ProcessAppendEntries(RaftAppendEntriesArgus rpcModel)
     {
+        var leader = RaftServerManager.Instance.GetServer(rpcModel.m_leaderId).transform;
 
+        // If current state is Follower, update its timeout
+        if (_serverStateController.m_stateType == RaftStateType.Follower)
+        {
+            _serverStateController.m_currentState.InitializeState(_serverProperty);
+        }
+
+        // Reply false if leader's term < currentTerm
+        if (rpcModel.m_term < _serverProperty.m_currentTerm)
+        {
+            _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, false, leader);
+        }
+
+        // Reply false if log doesn't contain an entry at prevLogIndex whose term matches prevLogTerm
+        int logTerm = rpcModel.m_prevLogIndex == 0 ? 0 : _serverProperty.m_logs[rpcModel.m_prevLogIndex].m_term;
+        if (logTerm != rpcModel.m_prevLogTerm)
+        {
+            _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, false, leader);
+        }
+
+        // If an existing entry conflicts with a new one (same index but different terms), 
+        // delete the existing entry and all that follow it
+        int matchIndex = 0;
+        for (int i = rpcModel.m_prevLogIndex + 1; (i <= _serverProperty.m_logs.Count) && (matchIndex < rpcModel.m_entries.Count); i++, matchIndex++)
+        {
+            if (_serverProperty.m_logs[i - 1].m_term != rpcModel.m_entries[matchIndex].m_term)
+            {
+                _serverProperty.m_logs.RemoveRange(i - 1, _serverProperty.m_logs.Count - i + 1);
+                break;
+            }
+        }
+
+        // Append any new entries not already in the log
+        while (matchIndex <= rpcModel.m_entries.Count)
+        {
+            _serverProperty.m_logs.Add(rpcModel.m_entries[matchIndex - 1]);
+        }
+                           
+        // If leaderCommit > commitIndex, update commitIndex
+        if (rpcModel.m_leaderCommit > _serverProperty.m_commitIndex)
+        {
+            _serverProperty.m_commitIndex = Mathf.Min(rpcModel.m_leaderCommit, _serverProperty.m_logs.Count);
+        }
     }
 
-    private void ProcessAppendEntriesReturn(RaftBaseRPCModel rpcModel)
+    private void ProcessAppendEntriesReturn(RaftAppendEntriesReturns rpcModel)
     {
+
 
     }
 
     private void ProcessRequestVote(RaftRequestVoteArgus rpcModel)
     {
-        bool voteGranted;
+        var candidate = RaftServerManager.Instance.GetServer(rpcModel.m_candidateId).transform;
 
-        // 1. Reply false if term < currentTerm
-        // 2. If votedFor is null or candidateId, and candidate’s log is at least as up - to - date as receiver’s log, grant vote
-        if ((rpcModel.m_term >= _serverProperty.m_currentTerm) &&
-            ((_serverProperty.m_votedFor <= 0) || (_serverProperty.m_votedFor == rpcModel.m_candidateId)))
+        // If a follower receive RPC from other, it will reset the time
+        if (_serverStateController.m_stateType == RaftStateType.Follower)
         {
-            int lastIndex = _serverProperty.m_logs.Count - 1;
-            int lastTerm = lastIndex < 0 ? -1 : _serverProperty.m_logs[lastIndex].m_term;
-
-            voteGranted = CompareLogPriority(rpcModel.m_lastLogIndex, rpcModel.m_lastLogTerm, lastIndex, lastTerm) >= 0;
+            _serverStateController.m_currentState.InitializeState(_serverProperty);
         }
-        else
+
+        // If candidate's term > currentTerm, reply false
+        if (rpcModel.m_term > _serverProperty.m_currentTerm)
         {
-            voteGranted = false;
+            _rpcSender.SendRequestVoteRPCReturn(_serverProperty.m_currentTerm, false, candidate);
+            return;
+        }
+
+        bool voteGranted = false;
+
+        // If votedFor is null or candidateId, and candidate’s log is at least as up - to - date as receiver’s log, grant vote
+        if ((_serverProperty.m_votedFor <= 0) || (_serverProperty.m_votedFor == rpcModel.m_candidateId))
+        {
+            int lastIndex = _serverProperty.m_logs.Count;
+            int lastTerm = lastIndex == 0 ? 0 : _serverProperty.m_logs[lastIndex].m_term;
+
+            if (CompareLogPriority(rpcModel.m_lastLogIndex, rpcModel.m_lastLogTerm, lastIndex, lastTerm) >= 0)
+            {
+                voteGranted = true;
+            }
         }
 
         // Chage server voteFor property if vote granted
@@ -88,37 +155,13 @@ public class RaftRPCReceiver : MonoBehaviour
             _serverProperty.m_votedFor = rpcModel.m_candidateId;
         }
 
-        // If candidate's term > currentTerm, set currentTerm = candidata's term, convert to follower
-        if (rpcModel.m_term > _serverProperty.m_currentTerm)
-        {
-            _serverProperty.m_currentTerm = rpcModel.m_term;
-            _serverStateController.m_currentState = _serverStateController.GetState("Follower State");
-            _serverStateController.m_currentState.InitializeState(_serverProperty);
-        }
-
-        // If a follower receive RPC from other, it will reset the time
-        if(_serverStateController.m_stateType == RaftStateType.Follower)
-        {
-            _serverStateController.m_currentState.InitializeState(_serverProperty);
-        }
-
         // Send the returns
-        var candidate = RaftServerManager.Instance.GetServer(rpcModel.m_candidateId).transform;
         _rpcSender.SendRequestVoteRPCReturn(_serverProperty.m_currentTerm, voteGranted, candidate);
     }
 
 
     private void ProcessRequestVoteReturn(RaftRequestVoteReturns rpcModel)
     {
-        // If response's term > currentTerm, set currentTerm = response'term, convert to follower
-        if (rpcModel.m_term > _serverProperty.m_currentTerm)
-        {
-            _serverProperty.m_currentTerm = rpcModel.m_term;
-            _serverStateController.m_currentState = _serverStateController.GetState("Follower State");
-            _serverStateController.m_currentState.InitializeState(_serverProperty);
-            return;
-        }
-
         if (_serverStateController.m_stateType == RaftStateType.Candidate)
         {
             var candidate = (RaftCandidateState)_serverStateController.m_currentState;
@@ -137,7 +180,6 @@ public class RaftRPCReceiver : MonoBehaviour
                 }
             }
         }
-
     }
 
 

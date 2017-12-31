@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class RaftCandidateState : RaftBaseState
 {
-    [Header("Candidate Relative Property")]
     /// <summary>
     /// If a candidate timeout, it will start a new election by 
     /// increamenting its term and initiating another round of RequestVote RPCs 
     /// </summary>
+    [Header("Candidate Relative Property")]
     [HideInInspector]
     public float m_electionTimeout;
 
@@ -61,6 +61,7 @@ public class RaftCandidateState : RaftBaseState
 
         // Increment currentTerm
         serverProperty.m_currentTerm++;
+        serverProperty.GetComponent<RaftServerEventMaster>().CallOnChangeTerm(serverProperty.m_currentTerm);
 
         // Vote for self
         serverProperty.m_votedFor = serverProperty.m_serverId;
@@ -74,8 +75,8 @@ public class RaftCandidateState : RaftBaseState
 
     private void IssueRquestVotes(RaftServerProperty serverProperty)
     {
-        int lastLogIndex = serverProperty.m_logs.Count - 1;
-        int lastLogTerm = (lastLogIndex < 0) ? -1 : serverProperty.m_logs[lastLogIndex].m_term;
+        int lastLogIndex = serverProperty.m_logs.Count;
+        int lastLogTerm = (lastLogIndex == 0) ? 0 : serverProperty.m_logs[lastLogIndex].m_term;
 
         var sender = serverProperty.GetComponent<RaftRPCSender>();
         sender.SendRequestVoteRPCArgu(serverProperty.m_currentTerm, serverProperty.m_serverId, lastLogIndex, lastLogTerm);

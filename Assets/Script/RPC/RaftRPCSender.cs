@@ -17,7 +17,7 @@ public class RaftRPCSender : MonoBehaviour
 
 
     /// <summary>
-    /// Invoked by leader to append entries to follower
+    /// Invoked by leader to append entries to a certain target
     /// </summary>
     /// <param name="term">Leader's term</param>
     /// <param name="leaderId">Leader's id. So follower can redirect clients</param>
@@ -25,39 +25,55 @@ public class RaftRPCSender : MonoBehaviour
     /// <param name="prevLogTerm">Term of prevLogIndex</param>
     /// <param name="entries">Log entries to store (empty for heartbeat; may send more than one entry for efficiency)</param>
     /// <param name="leaderCommit">Leader's committed index</param>
-    public void SendAppendEntriesRPCArgu(int term, int leaderId, int prevLogIndex, int prevLogTerm, List<char?> entries, int leaderCommit)
+    public void SendAppendEntriesRPCArgu(int term, int leaderId, int prevLogIndex, int prevLogTerm, List<RaftEntry> entries, int leaderCommit, Transform target)
     {
-        foreach(var server in RaftServerManager.Instance.m_servers)
-        {
-            if(server.m_serverId != leaderId)
-            {
-                GameObject appendEntriesGo = Instantiate(m_appendEntriesArguPrefab, transform.position, Quaternion.identity);
+        GameObject appendEntriesGo = Instantiate(m_appendEntriesArguPrefab, transform.position, Quaternion.identity);
 
-                // Set append entries arguments
-                var argus = appendEntriesGo.GetComponent<RaftAppendEntriesArgus>();
-                argus.m_rpcType = RaftRPCType.AppendEntriesArgu;
-                argus.m_target = server.transform;
-                argus.m_term = term;
-                argus.m_leaderId = leaderId;
-                argus.m_prevLogIndex = prevLogIndex;
-                argus.m_prevLogTerm = prevLogTerm;
-                argus.m_entries = new List<char?>(entries);
-                argus.m_leaderCommit = leaderCommit;
+        // Set append entries arguments
+        var argus = appendEntriesGo.GetComponent<RaftAppendEntriesArgus>();
+        argus.m_rpcType = RaftRPCType.AppendEntriesArgu;
+        argus.m_target = target.transform;
+        argus.m_term = term;
+        argus.m_leaderId = leaderId;
+        argus.m_prevLogIndex = prevLogIndex;
+        argus.m_prevLogTerm = prevLogTerm;
+        argus.m_entries = new List<RaftEntry>(entries);
+        argus.m_indexes = new List<int>(indexes);
+        argus.m_leaderCommit = leaderCommit;
 
-                // Init move script
-                var moveToward = appendEntriesGo.GetComponent<MoveToward>();
-                moveToward.m_target = server.transform;
-                moveToward.enabled = true;
+        // Init move script
+        var moveToward = appendEntriesGo.GetComponent<MoveToward>();
+        moveToward.m_target = target.transform;
+        moveToward.enabled = true;
 
-                // Set sprite
-                appendEntriesGo.GetComponent<SpriteRenderer>().sprite = m_normalSendIcon;
-            }
-        }
+        // Set sprite
+        appendEntriesGo.GetComponent<SpriteRenderer>().sprite = m_normalSendIcon;
     }
 
-    public bool SendAppendEntriesRPCReturn(RaftServerProperty serverProperty, Transform target)
+
+    /// <summary>
+    /// Send AppendEntries returns to leader
+    /// </summary>
+    /// <param name="term">sender's currentTerm, for leader to update itself</param>
+    /// <param name="success">true if follower contained entry matching leader's prevLogIndex and prevLogTerm</param>
+    public void SendAppendEntriesRPCReturn(int term, bool success, Transform leader)
     {
-        return false;
+        var appendEntriesGo = Instantiate(m_requestVoteRetuPrefab, transform.position, Quaternion.identity);
+
+        // Set returns property
+        var appendReturn = appendEntriesGo.GetComponent<RaftAppendEntriesReturns>();
+        appendReturn.m_rpcType = RaftRPCType.AppendEntriesReturn;
+        appendReturn.m_target = leader;
+        appendReturn.m_term = term;
+        appendReturn.m_success = success;
+
+        // Set move script
+        var moveToward = appendEntriesGo.GetComponent<MoveToward>();
+        moveToward.m_target = leader;
+        moveToward.enabled = true;
+
+        // Set sprite
+        appendEntriesGo.GetComponent<SpriteRenderer>().sprite = success ? m_voteTrueSendIcon : m_voteFalseSendIcon;
     }
 
     /// <summary>

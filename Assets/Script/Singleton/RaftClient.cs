@@ -9,17 +9,39 @@ public class RaftClient : RaftSingletonMonoBehavior<RaftClient>
     public List<char?> m_historicCommand;
 
     /// <summary>
+    /// Called when client add command.
+    /// Parameter: char? -- command; int -- added command index
+    /// </summary>
+    public System.Action<char?, int> OnAddCommand;
+
+    /// <summary>
+    /// Called when server get command.
+    /// Parameter: char? -- command
+    /// </summary>
+    public System.Action<char?> OnGetCommand;
+
+
+
+
+    /// <summary>
     /// Add a command into command cache
     /// </summary>
     public void AddCommand(char? command)
     {
-        if(m_commandCache == null)
+        if (command == null) return;
+
+        if (m_commandCache == null)
         {
             m_commandCache = new Queue<char?>();
         }
         m_commandCache.Enqueue(command);
-    
-        if(m_historicCommand == null)
+
+        if (OnAddCommand != null)
+        {
+            OnAddCommand(command, m_commandCache.Count);
+        }
+
+        if (m_historicCommand == null)
         {
             m_historicCommand = new List<char?>();
         }
@@ -28,16 +50,31 @@ public class RaftClient : RaftSingletonMonoBehavior<RaftClient>
 
 
     /// <summary>
-    /// Get a command from command cache. Return null if there is no command.
+    /// Get all command from command cache. Return null if there is no command.
     /// </summary>
-    public char? GetCommand()
+    public List<char?> GetCommand()
     {
-        if(m_commandCache != null && m_commandCache.Count > 0)
+        List<char?> commands = new List<char?>(m_commandCache.Count);
+
+        if (m_commandCache != null && m_commandCache.Count > 0)
         {
-            return m_commandCache.Dequeue();
+            char? command = m_commandCache.Dequeue();
+            commands.Add(command);
+
+            if (OnGetCommand != null)
+            {
+                OnGetCommand(command);
+            }
         }
 
-        return null;
+        if (commands.Count != 0)
+        {
+            return commands;
+        }
+        else
+        {
+            return null;
+        }
     }
 
 }

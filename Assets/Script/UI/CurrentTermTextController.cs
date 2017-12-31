@@ -4,12 +4,26 @@ using UnityEngine;
 
 public class CurrentTermTextController : MonoBehaviour
 {
-    public RaftServerProperty m_serverProperty;
+    public RaftServerEventMaster m_serverEventMaster;
 
     public TMPro.TextMeshProUGUI m_curTermText;
 
-    private void Update()
+    private void OnEnable()
     {
-        m_curTermText.text = m_serverProperty.m_currentTerm.ToString();
+        // Initialize current text
+        m_curTermText.text = m_serverEventMaster.GetComponent<RaftServerProperty>().m_currentTerm.ToString();
+
+        m_serverEventMaster.OnChangeTerm += ApplyCurrentTermUI;    
+    }
+
+    private void OnDisable()
+    {
+        m_serverEventMaster.OnChangeTerm -= ApplyCurrentTermUI;
+    }
+
+
+    private void ApplyCurrentTermUI(int currentTerm)
+    {
+        m_curTermText.text = currentTerm.ToString();
     }
 }

@@ -3,12 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class RaftRequestVoteArgus : RaftBaseRPCModel
-{
-    /// <summary>
-    /// Candidate's term
-    /// </summary>
-    public int m_term;
-
+{                      
     /// <summary>
     /// Id of the candidate which request vote
     /// </summary>
