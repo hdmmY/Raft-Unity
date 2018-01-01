@@ -28,7 +28,7 @@ public class RaftRPCReceiver : MonoBehaviour
 
     private void Receive(RaftBaseRPCModel rpcModel)
     {
-        if (!_serverProperty.m_working || rpcModel == null || rpcModel.m_target != transform)
+        if (rpcModel == null || rpcModel.m_target != transform)
         {
             return;
         }
@@ -65,6 +65,7 @@ public class RaftRPCReceiver : MonoBehaviour
     private void ProcessAppendEntries(RaftAppendEntriesArgus rpcModel)
     {
         var leader = RaftServerManager.Instance.GetServer(rpcModel.m_leaderId).transform;
+        if (leader == null) return;
 
         // If current state is Follower, update its timeout
         if (_serverStateController.m_stateType == RaftStateType.Follower)
@@ -87,29 +88,27 @@ public class RaftRPCReceiver : MonoBehaviour
             return;
         }
 
-        // Reply if receive a heartbeat
-        if((rpcModel.m_entries == null) || (rpcModel.m_entries.Count == 0))
-        {
-            _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, true, _serverProperty.m_serverId, leader);
-            return;
-        }
 
-        // If an existing entry conflicts with a new one (same index but different terms), 
-        // delete the existing entry and all that follow it
-        int matchIndex = 0;
-        for (int i = rpcModel.m_prevLogIndex + 1; (i <= _serverProperty.m_logs.Count) && (matchIndex < rpcModel.m_entries.Count); i++, matchIndex++)
+        if ((rpcModel.m_entries != null) && (rpcModel.m_entries.Count > 0))
         {
-            if (_serverProperty.m_logs[i - 1].m_term != rpcModel.m_entries[matchIndex].m_term)
+            int matchIndex = 0;
+
+            // If an existing entry conflicts with a new one (same index but different terms), 
+            // delete the existing entry and all that follow it
+            for (int i = rpcModel.m_prevLogIndex + 1; (i <= _serverProperty.m_logs.Count) && (matchIndex < rpcModel.m_entries.Count); i++, matchIndex++)
             {
-                _serverProperty.m_logs.RemoveRange(i - 1, _serverProperty.m_logs.Count - i + 1);
-                break;
+                if (_serverProperty.m_logs[i - 1].m_term != rpcModel.m_entries[matchIndex].m_term)
+                {
+                    _serverProperty.m_logs.RemoveRange(i - 1, _serverProperty.m_logs.Count - i + 1);
+                    break;
+                }
             }
-        }
 
-        // Append any new entries not already in the log
-        while (matchIndex < rpcModel.m_entries.Count)
-        {
-            _serverProperty.m_logs.Add(rpcModel.m_entries[matchIndex++]);
+            // Append any new entries not already in the log
+            while (matchIndex < rpcModel.m_entries.Count)
+            {
+                _serverProperty.m_logs.Add(rpcModel.m_entries[matchIndex++]);
+            }
         }
 
         // If leaderCommit > commitIndex, update commitIndex
@@ -141,6 +140,7 @@ public class RaftRPCReceiver : MonoBehaviour
     private void ProcessRequestVote(RaftRequestVoteArgus rpcModel)
     {
         var candidate = RaftServerManager.Instance.GetServer(rpcModel.m_candidateId).transform;
+        if (candidate == null) return;
 
         // If a follower receive RPC from other, it will reset the time
         if (_serverStateController.m_stateType == RaftStateType.Follower)

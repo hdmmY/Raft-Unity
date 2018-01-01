@@ -10,12 +10,7 @@ public class RaftServerProperty : MonoBehaviour
     /// Id that can identify a server
     /// </summary>
     [Header("Persistant Properties")]
-    public int m_serverId;
-
-    /// <summary>
-    /// True means this server is on working, false means this server stop or crash 
-    /// </summary>
-    public bool m_working;
+    public int m_serverId;         
 
     /// <summary>
     /// Last term this server has ever seen
@@ -73,11 +68,15 @@ public class RaftServerProperty : MonoBehaviour
     private void OnEnable()
     {
         GetComponent<RaftServerEventMaster>().OnChangeTerm += UpdateProperties;
+
+        RaftServerManager.Instance.m_servers.Add(this);
     }
 
     private void OnDisable()
     {
         GetComponent<RaftServerEventMaster>().OnChangeTerm -= UpdateProperties;
+
+        RaftServerManager.Instance.m_servers.Remove(this);    
     }
 
     private void UpdateProperties(int currentTerm)

@@ -15,12 +15,12 @@ public class RaftLeaderState : RaftBaseState
 
         m_stateController.m_stateType = RaftStateType.Leader;
 
-        int serverNumber = RaftServerManager.Instance.m_servers.Count;
+        int serverNumber = RaftServerManager.Instance.m_totalServerCount;
 
         // Initialize leader's nextIndex, matchIndex and lastReplicateIndex
         serverProperty.m_nextIndex = new List<int>(serverNumber);
         serverProperty.m_matchIndex = new List<int>(serverNumber);
-        serverProperty.m_lastReplicateIndex = new List<int>(serverNumber); 
+        serverProperty.m_lastReplicateIndex = new List<int>(serverNumber);
         for (int i = 0; i < serverNumber; i++)
         {
             serverProperty.m_nextIndex.Add(serverProperty.m_logs.Count + 1);
@@ -45,20 +45,21 @@ public class RaftLeaderState : RaftBaseState
             foreach (var command in commands)
             {
                 serverProperty.m_logs.Add(new RaftEntry(command, serverProperty.m_currentTerm));
+                serverProperty.m_matchIndex[serverProperty.m_serverId - 1] = serverProperty.m_logs.Count;
             }
         }
 
         // If exist N > commitIndex, and majority of matchIndex[i] >= N, then log[N].term = currentTerm, set commitIndex = N
-        for(int n = serverProperty.m_commitIndex + 1; n <= serverProperty.m_logs.Count; n++)
+        for (int n = serverProperty.m_commitIndex + 1; n <= serverProperty.m_logs.Count; n++)
         {
             int commitNumber = 0;
-            int serverNumber = RaftServerManager.Instance.m_servers.Count;
-            for(int i = 0; i < serverNumber; i++)
+            int serverNumber = RaftServerManager.Instance.m_totalServerCount;
+            for (int i = 0; i < serverNumber; i++)
             {
                 if (serverProperty.m_matchIndex[i] >= n) commitNumber++;
             }
 
-            if(commitNumber * 2 > serverNumber)
+            if (commitNumber * 2 > serverNumber)
             {
                 serverProperty.m_logs[n - 1].UpdateTerm(serverProperty.m_currentTerm);
                 serverProperty.m_commitIndex = n;
@@ -112,7 +113,7 @@ public class RaftLeaderState : RaftBaseState
                                 server.transform);
 
                 // Update lastReplicateIndex upon send the entries 
-                if(entries != null && entries.Count > 0)
+                if (entries != null && entries.Count > 0)
                 {
                     serverProperty.m_lastReplicateIndex[server.m_serverId - 1] = serverProperty.m_logs.Count;
                 }

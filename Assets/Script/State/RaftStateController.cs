@@ -33,10 +33,7 @@ public class RaftStateController : MonoBehaviour
 
     private void Update()
     {
-        if (_serverProperty.m_working)
-        {
-            m_currentState.UpdateState(_serverProperty);
-        }
+        m_currentState.UpdateState(_serverProperty);
     }
 
     /// <summary>
@@ -54,4 +51,7 @@ public class RaftStateController : MonoBehaviour
 
         return null;
     }
+
+
+
 }

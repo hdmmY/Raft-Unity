@@ -5,7 +5,13 @@ using UnityEngine;
 public class RaftServerManager : RaftSingletonMonoBehavior<RaftServerManager>
 {
     /// <summary>
-    /// Total server in current enviroment. Including active server and deactive server
+    /// Total server in current enviroment, include active and deactive server
+    /// It show bu set right before use raft algorithm
+    /// </summary>
+    public int m_totalServerCount;
+
+    /// <summary>
+    /// Total server in current enviroment. Only include active server
     /// </summary>
     public List<RaftServerProperty> m_servers;
 
