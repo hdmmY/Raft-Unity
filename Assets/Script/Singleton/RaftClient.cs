@@ -54,7 +54,7 @@ public class RaftClient : RaftSingletonMonoBehavior<RaftClient>
     /// </summary>
     public List<char?> GetCommand()
     {
-        List<char?> commands = new List<char?>(m_commandCache.Count);
+        List<char?> commands = new List<char?>();
 
         if (m_commandCache != null && m_commandCache.Count > 0)
         {

@@ -77,14 +77,23 @@ public class RaftRPCReceiver : MonoBehaviour
         // Reply false if leader's term < currentTerm
         if (rpcModel.m_term < _serverProperty.m_currentTerm)
         {
-            _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, false, leader);
+            _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, false, _serverProperty.m_serverId, leader);
+            return;
         }
 
         // Reply false if log doesn't contain an entry at prevLogIndex whose term matches prevLogTerm
-        int logTerm = rpcModel.m_prevLogIndex == 0 ? 0 : _serverProperty.m_logs[rpcModel.m_prevLogIndex].m_term;
+        int logTerm = rpcModel.m_prevLogIndex == 0 ? 0 : _serverProperty.m_logs[rpcModel.m_prevLogIndex - 1].m_term;
         if (logTerm != rpcModel.m_prevLogTerm)
         {
-            _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, false, leader);
+            _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, false, _serverProperty.m_serverId, leader);
+            return;
+        }
+
+        // Reply if receive a heartbeat
+        if((rpcModel.m_entries == null) || (rpcModel.m_entries.Count == 0))
+        {
+            _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, true, _serverProperty.m_serverId, leader);
+            return;
         }
 
         // If an existing entry conflicts with a new one (same index but different terms), 
@@ -100,22 +109,35 @@ public class RaftRPCReceiver : MonoBehaviour
         }
 
         // Append any new entries not already in the log
-        while (matchIndex <= rpcModel.m_entries.Count)
+        while (matchIndex < rpcModel.m_entries.Count)
         {
-            _serverProperty.m_logs.Add(rpcModel.m_entries[matchIndex - 1]);
+            _serverProperty.m_logs.Add(rpcModel.m_entries[matchIndex++]);
         }
-                           
+
         // If leaderCommit > commitIndex, update commitIndex
         if (rpcModel.m_leaderCommit > _serverProperty.m_commitIndex)
         {
             _serverProperty.m_commitIndex = Mathf.Min(rpcModel.m_leaderCommit, _serverProperty.m_logs.Count);
         }
+
+        _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, true, _serverProperty.m_serverId, leader);
     }
 
     private void ProcessAppendEntriesReturn(RaftAppendEntriesReturns rpcModel)
     {
+        if (_serverStateController.m_stateType != RaftStateType.Leader) return;
 
-
+        // If successful: update nextIndex and matchIndex for follower
+        if (rpcModel.m_success)
+        {
+            _serverProperty.m_nextIndex[rpcModel.m_followerId - 1] = _serverProperty.m_lastReplicateIndex[rpcModel.m_followerId - 1] + 1;
+            _serverProperty.m_matchIndex[rpcModel.m_followerId - 1] = _serverProperty.m_lastReplicateIndex[rpcModel.m_followerId - 1];
+        }
+        // AppendEntries fails because of log inconsistency, decrement the nextIndex
+        else
+        {
+            _serverProperty.m_nextIndex[rpcModel.m_followerId - 1]--;
+        }
     }
 
     private void ProcessRequestVote(RaftRequestVoteArgus rpcModel)
@@ -141,7 +163,7 @@ public class RaftRPCReceiver : MonoBehaviour
         if ((_serverProperty.m_votedFor <= 0) || (_serverProperty.m_votedFor == rpcModel.m_candidateId))
         {
             int lastIndex = _serverProperty.m_logs.Count;
-            int lastTerm = lastIndex == 0 ? 0 : _serverProperty.m_logs[lastIndex].m_term;
+            int lastTerm = lastIndex == 0 ? 0 : _serverProperty.m_logs[lastIndex - 1].m_term;
 
             if (CompareLogPriority(rpcModel.m_lastLogIndex, rpcModel.m_lastLogTerm, lastIndex, lastTerm) >= 0)
             {

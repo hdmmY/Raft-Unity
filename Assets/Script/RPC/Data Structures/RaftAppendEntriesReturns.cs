@@ -8,4 +8,6 @@ public class RaftAppendEntriesReturns : RaftBaseRPCModel
     /// True if follower contain log entry matching prevLogIndex and prevLogTerm
     /// </summary>
     public bool m_success;
+
+    public int m_followerId;
 }

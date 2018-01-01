@@ -37,8 +37,7 @@ public class RaftRPCSender : MonoBehaviour
         argus.m_leaderId = leaderId;
         argus.m_prevLogIndex = prevLogIndex;
         argus.m_prevLogTerm = prevLogTerm;
-        argus.m_entries = new List<RaftEntry>(entries);
-        argus.m_indexes = new List<int>(indexes);
+        argus.m_entries = entries;
         argus.m_leaderCommit = leaderCommit;
 
         // Init move script
@@ -56,9 +55,9 @@ public class RaftRPCSender : MonoBehaviour
     /// </summary>
     /// <param name="term">sender's currentTerm, for leader to update itself</param>
     /// <param name="success">true if follower contained entry matching leader's prevLogIndex and prevLogTerm</param>
-    public void SendAppendEntriesRPCReturn(int term, bool success, Transform leader)
+    public void SendAppendEntriesRPCReturn(int term, bool success, int followerId, Transform leader)
     {
-        var appendEntriesGo = Instantiate(m_requestVoteRetuPrefab, transform.position, Quaternion.identity);
+        var appendEntriesGo = Instantiate(m_appendEntriesRetuPrefab, transform.position, Quaternion.identity);
 
         // Set returns property
         var appendReturn = appendEntriesGo.GetComponent<RaftAppendEntriesReturns>();
@@ -66,6 +65,7 @@ public class RaftRPCSender : MonoBehaviour
         appendReturn.m_target = leader;
         appendReturn.m_term = term;
         appendReturn.m_success = success;
+        appendReturn.m_followerId = followerId;
 
         // Set move script
         var moveToward = appendEntriesGo.GetComponent<MoveToward>();

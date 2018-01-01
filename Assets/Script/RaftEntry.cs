@@ -14,7 +14,17 @@ public struct RaftEntry
 
     public RaftEntry(char? command, int term)
     {
-        this.m_command = command;
-        this.m_term = term;
+        m_command = command;
+        m_term = term;
+    }
+
+    public void UpdateTerm(int term)
+    {
+        m_term = term;
+    }
+
+    public void UpdateCommand(char? command)
+    {
+        m_command = command;
     }
 }

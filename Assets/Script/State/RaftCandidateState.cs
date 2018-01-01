@@ -76,7 +76,7 @@ public class RaftCandidateState : RaftBaseState
     private void IssueRquestVotes(RaftServerProperty serverProperty)
     {
         int lastLogIndex = serverProperty.m_logs.Count;
-        int lastLogTerm = (lastLogIndex == 0) ? 0 : serverProperty.m_logs[lastLogIndex].m_term;
+        int lastLogTerm = (lastLogIndex == 0) ? 0 : serverProperty.m_logs[lastLogIndex - 1].m_term;
 
         var sender = serverProperty.GetComponent<RaftRPCSender>();
         sender.SendRequestVoteRPCArgu(serverProperty.m_currentTerm, serverProperty.m_serverId, lastLogIndex, lastLogTerm);

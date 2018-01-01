@@ -354,6 +354,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_stateController: {fileID: 0}
+  m_eventMaster: {fileID: 0}
   m_electionTimeout: 0
   m_maxElectionTimeout: 0.5
   m_minElectionTimeout: 0.3
@@ -404,6 +405,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_stateController: {fileID: 0}
+  m_eventMaster: {fileID: 0}
   m_heartbeatDue: 0.05
 --- !u!114 &114543643459501744
 MonoBehaviour:
@@ -676,6 +678,7 @@ MonoBehaviour:
   m_lastApplied: 0
   m_nextIndex: 
   m_matchIndex: 
+  m_lastReplicateIndex: 
 --- !u!114 &114828825859377950
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -713,7 +716,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d14410235165b2409e839ff4229c595, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_stateType: 0
+  m_stateType: 2
   m_currentState: {fileID: 0}
   m_totalState:
   - {fileID: 114251017080246258}
@@ -869,6 +872,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_stateController: {fileID: 0}
+  m_eventMaster: {fileID: 0}
   m_electionTimeout: 0
   m_maxElectionTimeout: 0.5
   m_minElectionTimeout: 0.3

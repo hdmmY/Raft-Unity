@@ -64,6 +64,10 @@ public class RaftServerProperty : MonoBehaviour
     /// </summary>
     public List<int> m_matchIndex;
 
+    /// <summary>
+    /// For each server, index of highest log entry kown to be send to server (not means server has applied it)
+    /// </summary>
+    public List<int> m_lastReplicateIndex;
 
 
     private void OnEnable()
@@ -80,6 +84,4 @@ public class RaftServerProperty : MonoBehaviour
     {
         m_votedFor = 0;
     }
-
-
 }
