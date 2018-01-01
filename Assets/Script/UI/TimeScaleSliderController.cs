@@ -12,6 +12,8 @@ public class TimeScaleSliderController : MonoBehaviour
 
     private void Update()
     {
+        if (RaftTime.Instance.TimeScale == 0) return;
+
         int scale = (int)(m_timeScaleSlider.maxValue + m_timeScaleSlider.minValue - m_timeScaleSlider.value);
         scale = (int)(Mathf.Pow(scale / 1000f, 4) * 1000);
         scale = scale < 1 ? 1 : scale;

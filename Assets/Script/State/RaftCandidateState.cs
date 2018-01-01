@@ -84,7 +84,7 @@ public class RaftCandidateState : RaftBaseState
 
     private void InitiVoteGranded(RaftServerProperty serverProperty)
     {
-        m_voteResult = new bool[RaftServerManager.Instance.m_servers.Count];
+        m_voteResult = new bool[RaftServerManager.Instance.m_totalServerCount];
 
         for (int i = 0; i < m_voteResult.Length; i++) m_voteResult[i] = false;
         m_voteResult[0] = true;  // Vote for itself
