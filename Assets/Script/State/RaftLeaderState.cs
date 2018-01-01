@@ -39,7 +39,7 @@ public class RaftLeaderState : RaftBaseState
         base.UpdateState(serverProperty);
 
         // If command received from client, append entry to local log
-        List<char?> commands = RaftClient.Instance.GetCommand();
+        List<char> commands = RaftClient.Instance.GetCommand();
         if ((commands != null) && (commands.Count != 0))
         {
             foreach (var command in commands)

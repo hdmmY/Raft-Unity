@@ -4,21 +4,21 @@ using UnityEngine;
 
 public class RaftClient : RaftSingletonMonoBehavior<RaftClient>
 {
-    public Queue<char?> m_commandCache;
+    public Queue<char> m_commandCache;
 
-    public List<char?> m_historicCommand;
+    public List<char> m_historicCommand;
 
     /// <summary>
     /// Called when client add command.
     /// Parameter: char? -- command; int -- added command index
     /// </summary>
-    public System.Action<char?, int> OnAddCommand;
+    public System.Action<char, int> OnAddCommand;
 
     /// <summary>
     /// Called when server get command.
     /// Parameter: char? -- command
     /// </summary>
-    public System.Action<char?> OnGetCommand;
+    public System.Action<char> OnGetCommand;
 
 
 
@@ -26,39 +26,37 @@ public class RaftClient : RaftSingletonMonoBehavior<RaftClient>
     /// <summary>
     /// Add a command into command cache
     /// </summary>
-    public void AddCommand(char? command)
+    public void AddCommand(char command)
     {
-        if (command == null) return;
-
         if (m_commandCache == null)
         {
-            m_commandCache = new Queue<char?>();
+            m_commandCache = new Queue<char>();
         }
         m_commandCache.Enqueue(command);
 
-        if (OnAddCommand != null)
-        {
-            OnAddCommand(command, m_commandCache.Count);
-        }
-
         if (m_historicCommand == null)
         {
-            m_historicCommand = new List<char?>();
+            m_historicCommand = new List<char>();
         }
         m_historicCommand.Add(command);
+
+        if (OnAddCommand != null)
+        {
+            OnAddCommand(command, m_historicCommand.Count);
+        }
     }
 
 
     /// <summary>
     /// Get all command from command cache. Return null if there is no command.
     /// </summary>
-    public List<char?> GetCommand()
+    public List<char> GetCommand()
     {
-        List<char?> commands = new List<char?>();
+        List<char> commands = new List<char>();
 
-        if (m_commandCache != null && m_commandCache.Count > 0)
+        while (m_commandCache != null && m_commandCache.Count > 0)
         {
-            char? command = m_commandCache.Dequeue();
+            char command = m_commandCache.Dequeue();
             commands.Add(command);
 
             if (OnGetCommand != null)

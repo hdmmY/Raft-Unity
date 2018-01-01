@@ -7,14 +7,12 @@ public class RaftRPCReceiver : MonoBehaviour
 {
     private RaftServerProperty _serverProperty;
     private RaftStateController _serverStateController;
-    private RaftServerEventMaster _serverEventMaster;
     private RaftRPCSender _rpcSender;
 
     private void Awake()
     {
         _serverProperty = GetComponent<RaftServerProperty>();
         _serverStateController = GetComponent<RaftStateController>();
-        _serverEventMaster = GetComponent<RaftServerEventMaster>();
         _rpcSender = GetComponent<RaftRPCSender>();
     }
 

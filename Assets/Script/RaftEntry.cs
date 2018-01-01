@@ -4,7 +4,7 @@
 [System.Serializable]
 public struct RaftEntry
 {
-    public char? m_command;
+    public char m_command;
 
     /// <summary>
     /// When entry was received by leader.
@@ -12,7 +12,7 @@ public struct RaftEntry
     /// </summary>
     public int m_term;
 
-    public RaftEntry(char? command, int term)
+    public RaftEntry(char command, int term)
     {
         m_command = command;
         m_term = term;
@@ -23,7 +23,7 @@ public struct RaftEntry
         m_term = term;
     }
 
-    public void UpdateCommand(char? command)
+    public void UpdateCommand(char command)
     {
         m_command = command;
     }

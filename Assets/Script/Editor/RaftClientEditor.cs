@@ -20,11 +20,9 @@ public class RaftClientEditor : Editor
             int index = 0;
             foreach (var command in targetScript.m_commandCache)
             {
-                char commandChar = command == null ? '\0' : (char)command;
-
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.PrefixLabel(string.Format("Element {0}", index++));
-                EditorGUILayout.TextArea(commandChar.ToString());
+                EditorGUILayout.TextArea(command.ToString());
                 EditorGUILayout.EndHorizontal();
             }
             EditorGUI.indentLevel--;
@@ -40,11 +38,9 @@ public class RaftClientEditor : Editor
             int index = 0;
             foreach (var command in targetScript.m_historicCommand)
             {
-                char commandChar = command == null ? '\0' : (char)command;
-
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.PrefixLabel(string.Format("Element {0}", index++));
-                EditorGUILayout.TextArea(commandChar.ToString());
+                EditorGUILayout.TextArea(command.ToString());
                 EditorGUILayout.EndHorizontal();
             }
             EditorGUI.indentLevel--;
