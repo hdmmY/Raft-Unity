@@ -89,6 +89,11 @@ public class RaftRPCReceiver : MonoBehaviour
         }
 
         // Reply false if log doesn't contain an entry at prevLogIndex whose term matches prevLogTerm
+        if(rpcModel.m_prevLogIndex > _serverProperty.m_logs.Count)
+        {
+            _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, false, _serverProperty.m_serverId, leader.transform);
+            return;
+        }
         int logTerm = rpcModel.m_prevLogIndex == 0 ? 0 : _serverProperty.m_logs[rpcModel.m_prevLogIndex - 1].m_term;
         if (logTerm != rpcModel.m_prevLogTerm)
         {

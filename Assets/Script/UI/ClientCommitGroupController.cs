@@ -27,6 +27,6 @@ public class ClientCommitGroupController : MonoBehaviour
         commandText.color = new Color(commandText.color.r, commandText.color.g, commandText.color.b, 1);
 
         var edgeImage = m_edgeParent.GetChild(index).GetComponent<UnityEngine.UI.Image>();
-        edgeImage.color = new Color(edgeImage.color.r, edgeImage.color.g, edgeImage.color.b, 1);
+        edgeImage.color = Color.black;
     }
 }
