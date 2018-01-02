@@ -83,7 +83,7 @@ public class RaftTime : RaftSingletonMonoBehavior<RaftTime>
     private float _lastTime;
     protected override void Start()
     {
-        base.Start();
+        base.Start();        
 
         _lastTime = Time.time;
     }

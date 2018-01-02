@@ -27,10 +27,13 @@ public class ServerInfoUIController : MonoBehaviour
     public TextMeshProUGUI m_voteForResultText;
 
     private float _prevTimeScale;
+    private RaftServerProperty _curServer;
 
     public void SetValue(RaftServerProperty serverProperty)
     {
         _prevTimeScale = RaftTime.Instance.TimeScale;
+        _curServer = serverProperty;
+
         RaftTime.Instance.TimeScale = 0;
 
         RaftStateController stateController = serverProperty.GetComponent<RaftStateController>();
@@ -82,5 +85,40 @@ public class ServerInfoUIController : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    public void StopServer()
+    {
+        if(!_curServer.enabled)
+        {
+            return;
+        }
 
+        var serverSprite = _curServer.GetComponent<SpriteRenderer>();
+        var stateController = _curServer.GetComponent<RaftStateController>();
+        var timeImage = _curServer.GetComponentInChildren<TimerImageController>();
+
+        _curServer.enabled = false;
+        serverSprite.color = Color.gray;
+        stateController.enabled = false;
+        timeImage.m_leaderColor = new Color(timeImage.m_leaderColor.r, timeImage.m_leaderColor.g, timeImage.m_leaderColor.b, 0);
+        timeImage.m_timerColor= new Color(timeImage.m_timerColor.r, timeImage.m_timerColor.g, timeImage.m_timerColor.b, 0);
+    }
+
+
+    public void StartServer()
+    {
+        if(_curServer.enabled)
+        {
+            return;
+        }
+
+        var serverSprite = _curServer.GetComponent<SpriteRenderer>();
+        var stateController = _curServer.GetComponent<RaftStateController>();
+        var timeImage = _curServer.GetComponentInChildren<TimerImageController>();
+
+        _curServer.enabled = true;
+        serverSprite.color = Color.cyan;
+        stateController.enabled = true;
+        timeImage.m_leaderColor = new Color(timeImage.m_leaderColor.r, timeImage.m_leaderColor.g, timeImage.m_leaderColor.b, 1);
+        timeImage.m_timerColor = new Color(timeImage.m_timerColor.r, timeImage.m_timerColor.g, timeImage.m_timerColor.b, 1);
+    }
 }

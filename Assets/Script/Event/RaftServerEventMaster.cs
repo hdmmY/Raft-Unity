@@ -16,7 +16,14 @@ public class RaftServerEventMaster : MonoBehaviour
     /// Parameter 2 : log term.
     /// Parameter 3 : log index.
     /// </summary>
-    public Action<char?, int, int> OnApplyCommand;
+    public Action<char, int, int> OnApplyCommand;
+
+    /// <summary>
+    /// Called when server add a command.
+    /// Parameter 1 : command.
+    /// Parameter 2 : log term.
+    /// </summary>
+    public Action<char, int> OnAddCommand;
 
     public void CallOnChangeTerm(int currentTerm)
     {
@@ -26,11 +33,19 @@ public class RaftServerEventMaster : MonoBehaviour
         }
     }
 
-    public void CallOnApplyCommand(char? command, int logTerm, int logIndex)
+    public void CallOnApplyCommand(char command, int logTerm, int logIndex)
     {
         if(OnApplyCommand != null)
         {
             OnApplyCommand(command, logTerm, logIndex);
+        }
+    }
+
+    public void CallOnAddCommand(char command, int logIndex)
+    {
+        if(OnAddCommand != null)
+        {
+            OnAddCommand(command, logIndex);
         }
     }
 }

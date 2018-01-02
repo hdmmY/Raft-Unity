@@ -18,10 +18,7 @@ public class RaftClient : RaftSingletonMonoBehavior<RaftClient>
     /// Called when server get command.
     /// Parameter: char? -- command
     /// </summary>
-    public System.Action<char> OnGetCommand;
-
-
-
+    public System.Action<char> OnGetCommand;    
 
     /// <summary>
     /// Add a command into command cache

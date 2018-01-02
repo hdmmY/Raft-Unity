@@ -42,10 +42,12 @@ public class RaftLeaderState : RaftBaseState
         List<char> commands = RaftClient.Instance.GetCommand();
         if ((commands != null) && (commands.Count != 0))
         {
+            var serverEventMaster = serverProperty.GetComponent<RaftServerEventMaster>();
             foreach (var command in commands)
             {
                 serverProperty.m_logs.Add(new RaftEntry(command, serverProperty.m_currentTerm));
                 serverProperty.m_matchIndex[serverProperty.m_serverId - 1] = serverProperty.m_logs.Count;
+                serverEventMaster.CallOnAddCommand(command, serverProperty.m_logs.Count);                
             }
         }
 

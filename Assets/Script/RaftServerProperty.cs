@@ -10,7 +10,7 @@ public class RaftServerProperty : MonoBehaviour
     /// Id that can identify a server
     /// </summary>
     [Header("Persistant Properties")]
-    public int m_serverId;         
+    public int m_serverId;
 
     /// <summary>
     /// Last term this server has ever seen
@@ -69,6 +69,7 @@ public class RaftServerProperty : MonoBehaviour
     {
         GetComponent<RaftServerEventMaster>().OnChangeTerm += UpdateProperties;
 
+
         RaftServerManager.Instance.m_servers.Add(this);
     }
 
@@ -76,7 +77,10 @@ public class RaftServerProperty : MonoBehaviour
     {
         GetComponent<RaftServerEventMaster>().OnChangeTerm -= UpdateProperties;
 
-        RaftServerManager.Instance.m_servers.Remove(this);    
+        if (RaftServerManager.Instance.m_servers != null)
+        {
+            RaftServerManager.Instance.m_servers.Remove(this);
+        }
     }
 
     private void UpdateProperties(int currentTerm)

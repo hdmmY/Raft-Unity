@@ -33,6 +33,14 @@ public class RaftRPCReceiver : MonoBehaviour
             return;
         }
 
+        // This server is not working
+        if(!_serverProperty.enabled)
+        {
+            Destroy(rpcModel.gameObject);
+            return;
+        }
+
+
         // If leader's term > currentTerm, set currentTerm = leader's term, convert to follower
         if (rpcModel.m_term > _serverProperty.m_currentTerm)
         {
@@ -64,7 +72,7 @@ public class RaftRPCReceiver : MonoBehaviour
 
     private void ProcessAppendEntries(RaftAppendEntriesArgus rpcModel)
     {
-        var leader = RaftServerManager.Instance.GetServer(rpcModel.m_leaderId).transform;
+        var leader = RaftServerManager.Instance.GetServer(rpcModel.m_leaderId);
         if (leader == null) return;
 
         // If current state is Follower, update its timeout
@@ -76,7 +84,7 @@ public class RaftRPCReceiver : MonoBehaviour
         // Reply false if leader's term < currentTerm
         if (rpcModel.m_term < _serverProperty.m_currentTerm)
         {
-            _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, false, _serverProperty.m_serverId, leader);
+            _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, false, _serverProperty.m_serverId, leader.transform);
             return;
         }
 
@@ -84,7 +92,7 @@ public class RaftRPCReceiver : MonoBehaviour
         int logTerm = rpcModel.m_prevLogIndex == 0 ? 0 : _serverProperty.m_logs[rpcModel.m_prevLogIndex - 1].m_term;
         if (logTerm != rpcModel.m_prevLogTerm)
         {
-            _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, false, _serverProperty.m_serverId, leader);
+            _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, false, _serverProperty.m_serverId, leader.transform);
             return;
         }
 
@@ -105,9 +113,12 @@ public class RaftRPCReceiver : MonoBehaviour
             }
 
             // Append any new entries not already in the log
+            var serverEventMaster = _serverProperty.GetComponent<RaftServerEventMaster>();
             while (matchIndex < rpcModel.m_entries.Count)
             {
-                _serverProperty.m_logs.Add(rpcModel.m_entries[matchIndex++]);
+                var entry = rpcModel.m_entries[matchIndex++];
+                _serverProperty.m_logs.Add(entry);
+                serverEventMaster.CallOnAddCommand(entry.m_command, _serverProperty.m_logs.Count);
             }
         }
 
@@ -117,7 +128,7 @@ public class RaftRPCReceiver : MonoBehaviour
             _serverProperty.m_commitIndex = Mathf.Min(rpcModel.m_leaderCommit, _serverProperty.m_logs.Count);
         }
 
-        _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, true, _serverProperty.m_serverId, leader);
+        _rpcSender.SendAppendEntriesRPCReturn(_serverProperty.m_currentTerm, true, _serverProperty.m_serverId, leader.transform);
     }
 
     private void ProcessAppendEntriesReturn(RaftAppendEntriesReturns rpcModel)
@@ -139,7 +150,7 @@ public class RaftRPCReceiver : MonoBehaviour
 
     private void ProcessRequestVote(RaftRequestVoteArgus rpcModel)
     {
-        var candidate = RaftServerManager.Instance.GetServer(rpcModel.m_candidateId).transform;
+        var candidate = RaftServerManager.Instance.GetServer(rpcModel.m_candidateId);
         if (candidate == null) return;
 
         // If a follower receive RPC from other, it will reset the time
@@ -151,7 +162,7 @@ public class RaftRPCReceiver : MonoBehaviour
         // If candidate's term > currentTerm, reply false
         if (rpcModel.m_term > _serverProperty.m_currentTerm)
         {
-            _rpcSender.SendRequestVoteRPCReturn(_serverProperty.m_currentTerm, false, candidate);
+            _rpcSender.SendRequestVoteRPCReturn(_serverProperty.m_currentTerm, false, candidate.transform);
             return;
         }
 
@@ -176,7 +187,7 @@ public class RaftRPCReceiver : MonoBehaviour
         }
 
         // Send the returns
-        _rpcSender.SendRequestVoteRPCReturn(_serverProperty.m_currentTerm, voteGranted, candidate);
+        _rpcSender.SendRequestVoteRPCReturn(_serverProperty.m_currentTerm, voteGranted, candidate.transform);
     }
 
 
